@@ -1,14 +1,18 @@
 # Major Project Proposal
 
 ## Description
-What am I going to build?
+We will be building a rhythm based game using keyboard keys like a piano, or 
+nikcil
 
 ## Needs to Have List
-- thing 1
-- thing 2
+- Main menu screen
+- Level select screen
+- Gameplay screen
+- Customization of the background
 - etc
 
 ## Nice to Have List
-- other thing
-- other other thing
+- Options Menu (change volume of music/SFX)
+- Pause mid-game
 - etc
+!?BOMBOCLAT?!
