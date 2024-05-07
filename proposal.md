@@ -13,7 +13,6 @@ We will be building a rhythm based game using keyboard keys like a piano. It wil
 - Nice background for the gameplay to rest on
 - Customizable keybinds
 - Music
-- 
 
 ## Nice to Have List
 - Options Menu (change volume of music/SFX)
@@ -22,3 +21,4 @@ We will be building a rhythm based game using keyboard keys like a piano. It wil
 - Game version where you click on a circle as the boundary reaches the center
 - Level editor
 - Customization of the background during gameplay
+- Practice mode
