@@ -22,3 +22,4 @@ We will be building a rhythm based game using keyboard keys like a piano. It wil
 - Level editor
 - Customization of the background during gameplay
 - Practice mode
+- Fancy scroll and display for levels in the level select
