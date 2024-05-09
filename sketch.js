@@ -8,19 +8,28 @@
 
 let state = "start screen";
 let buttons = [];
-let startButton, levelSelectBackground, startScreenBackground;
+let levelSelectBackground, startScreenBackground;
+let startButton, settingsButton, creditsButton, tempDeathButton;
 
 function preload() {
   startButton = loadImage("Assets/Images/unnamed.png");
+  settingsButton = loadImage("Assets/Images/settings button.png");
   startScreenBackground = loadImage("Assets/Images/intensewalrusmissionfr.png");
-  levelSelectBackground = loadImage("Assets/Images/flower_backgroung.jpg");
+  levelSelectBackground = loadImage("Assets/Images/flower_background.jpg");
+  creditsButton = loadImage("Assets/Images/credits.png");
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   //adds all buttons to the "buttons" array
-  let newButton = new Button(width-200, height/2, width/5, height/5, "level select screen", startButton);
-  buttons.push(newButton);
+  let startGameButton = new Button(width-200, height/2 - 200, width/5, height/5, "level select screen", startButton);//(location:)x, y, (size:)width, height, (where it takes you:)string, name
+  buttons.push(startGameButton);
+  let settingsSelectButton = new Button(width-200, height/2, width/5, height/5, "settings", settingsButton)
+  buttons.push(settingsSelectButton);
+  // let tempDeathButton = new Button(width/2, height/2, width/5, height/5, "death screen", settingsButton)
+  // buttons.push(tempDeathButton);
+  let infoCreditsButton = new Button(width-200, height/2 + 200, width/5, height/5, "credits", creditsButton)
+  buttons.push(infoCreditsButton);
 }
 
 function draw() {
@@ -32,16 +41,25 @@ function draw() {
     for (let button of buttons) {
       button.update();
     }
-    fill("red");
-    rectMode(CENTER);
-    circle(mouseX, mouseY, 25);
+    redMouseCircle();
   }
   //Switching to the level select screen if you click the start button
   else if (state === "level select screen") {
     //place to pick the song
     imageMode(CORNER);
     background(levelSelectBackground);
+    redMouseCircle();
+    let backButton = new Button(width/5, height/5, width/10, height/10, "back", settingsButton)//goBackButton)
+    buttons.push(backButton);
   }
+  else if (state === "settings") {
+    background(0);
+    redMouseCircle();
+  }
+  else if (state === "credits") {
+    background("red");
+  }
+  
   //Scene shown while the actual gameplay is going
   else if (state === "game") {
     //the game things
@@ -58,7 +76,9 @@ function draw() {
   }
   //Screen shown if you dont do well enough on a level
   else if (state === "death screen") {
-    //the "retry or exit" upon failure
+    //in the future make this fade to red and then have the buttons appear
+    background(255, 0, 0, 100);
+    redMouseCircle();
   }
 }
 
@@ -119,3 +139,58 @@ function mousePressed() {
     button.mouseClicked();
   }
 }
+
+function redMouseCircle() {
+  noStroke();
+    fill(255, 0, 0, 150);
+    rectMode(CENTER);
+    circle(mouseX, mouseY, 25);
+}
+
+// const scrollProperties = {
+//   y: 0,
+//   spd: 0
+// };
+
+// let squares = [];
+
+// function setup() {
+//   createCanvas(windowWidth - 4, windowHeight - 4);
+//   // Initialize squares
+//   for (let i = 0; i < 20; i++) {
+//     squares.push(new Square(width/2, i*100));
+//   }
+// }
+
+// function draw() {
+//   background(13, 17, 21);
+//   scrollProperties.y -= scrollProperties.spd;
+//   scrollProperties.spd /= 1.9;
+
+//   // Draw squares
+//   for (let square of squares) {
+//     square.display();
+//   }
+// }
+
+// function mouseWheel(event) {
+//   scrollProperties.spd = event.delta;
+// }
+
+// class Square {
+//   constructor(x, y) {
+//     this.x = x;
+//     this.y = y;
+//     this.size = 50;
+//     this.color = color(random(255), random(255), random(255));
+//   }
+
+//   display() {
+//     fill(this.color);
+//     rectMode(CENTER);
+//     let scrolledY = this.y + scrollProperties.y;
+//     rect(this.x, scrolledY, this.size, this.size);
+//   }
+// }
+
+//^ is scroll to be worked on
