@@ -7,7 +7,9 @@
 // Extras for Experts:
 
 let state = "start screen";
+let lastState = "start screen";
 let buttons = [];
+let backButton = [];
 let levelSelectBackground, startScreenBackground;
 let startButton, settingsButton, creditsButton, tempDeathButton, goBackButton;
 const scrollProperties = {
@@ -17,8 +19,15 @@ const scrollProperties = {
 
 let squares = [];
 
+let notes = [];
+let lastNoteTime = 0;
+let gameStartTime;
+let activeKeys = [false, false, false, false]; 
+
+
 function preload() {
   startButton = loadImage("Assets/Images/unnamed.png");
+ // goBackButton = loadImages("Assets/Images/XXX.png");
   settingsButton = loadImage("Assets/Images/settings button.png");
   startScreenBackground = loadImage("Assets/Images/intensewalrusmissionfr.png");
   levelSelectBackground = loadImage("Assets/Images/flower_background.jpg");
@@ -27,7 +36,7 @@ function preload() {
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  //adds all buttons to the "buttons" array
+  //adds all buttons to the "buttons" array(except the back button which is in its own array that is displayed off the start screen as well)
   let startGameButton = new Button(width-200, height/2 - 200, width/5, height/5, "level select screen", startButton);//(location:)x, y, (size:)width, height, (where it takes you:)string, name
   buttons.push(startGameButton);
   let settingsSelectButton = new Button(width-200, height/2, width/5, height/5, "settings", settingsButton)
@@ -36,7 +45,8 @@ function setup() {
   buttons.push(infoCreditsButton);
   let startLevel1 = new Button(width/2, height/2, width/5, height/5, "level1", settingsButton);
   buttons.push(startLevel1);
-  // let goBackButton = new Button(width/5, height/5, width/10, height/10, "back", settingsButton)
+  let goBackButton = new Button(0 + width/12, 0 + height/12, width/8, height/10, state, settingsButton);
+  backButton.push(goBackButton);
   
   //Initialize squares
   for (let i = 0; i < 100; i++) {
@@ -67,13 +77,22 @@ function draw() {
       square.display()
     }
     redMouseCircle();
+    for (let button of backButton) {
+      button.update();
+    }
   }
   else if (state === "settings") {
     background(0);
     redMouseCircle();
+    for (let button of backButton) {
+      button.update();
+    }
   }
   else if (state === "credits") {
     background("red");
+    for (let button of backButton) {
+      button.update();
+    }
   }
   //Screen shown when you win a level
   else if (state === "win") {
@@ -93,13 +112,15 @@ function draw() {
   //Scene shown while the actual gameplay is going
   else if(state === "level1") {
     background(0);
-    
   }
 }
 
 function mousePressed() {
   //checks to see if you are clicking a button and performs the action indicated if you are
   for (let button of buttons) {
+    button.mouseClicked();
+  }
+  for (let button of backButton) {
     button.mouseClicked();
   }
 }
@@ -160,8 +181,12 @@ class Button {
     if (mouseX > this.x - this.width / 2 && mouseX < this.x + this.width / 2 &&
         mouseY > this.y - this.length / 2 && mouseY < this.y + this.length / 2) {
       //change state to the state the button changes you to
-      state = this.state;
-      console.log(this.state);
+      if (backButton.includes(this)) {
+        state = lastState;
+      }
+      else {
+        state = this.state;
+      }
     }
   }
 }
@@ -188,3 +213,49 @@ class Square {
 //make that selected item grow
 //moved by mouse drag
 //figure out levels
+
+
+
+
+
+//BARS THAT DROP DOWN CODE
+
+class Bars {
+  constructor(key) {
+    this.key = key;
+    this.y = 0;
+    this.speed = 5;
+    this.pressed = false;
+
+    const keySize = 60;
+    const xOffset = width / 2 - 1.5 * keySize;
+
+  }
+
+  display() {
+
+  }
+
+  
+}
+
+function keyPressed() { //askl
+  let keyIndex;
+
+  if (keyCode === 65) {
+    keyIndex = 0;
+  } 
+  else if (keyCode === 83) {
+    keyIndex = 1;
+  } 
+  else if (keyCode === 75) {
+    keyowIndex = 2;
+  } 
+  else if (keyCode === 76) {
+    keyIndex = 3;
+  }
+
+  if (keyIndex !== undefined) {
+    activeKeys[keyIndex] = true;
+  }
+}
