@@ -4,21 +4,24 @@
 //
 // Rhythm based game with piano keys
 //
-// Extras for Experts:
+// Extras for Experts: swtich, 
 
+//the menu "things"
 let state = "start screen";
 let lastState = "start screen";
 let buttons = [];
 let backButton = [];
 let levelSelectBackground, startScreenBackground;
 let startButton, settingsButton, creditsButton, tempDeathButton, goBackButton;
+
+//the level select "things"
+let squares = [];
 const scrollProperties = {
   y: 0,
   spd: 0
 };
 
-let squares = [];
-
+//the gameplay "things"
 let notes = [];
 let lastNoteTime = 0;
 let gameStartTime;
@@ -52,7 +55,12 @@ function setup() {
   for (let i = 0; i < 100; i++) {
     squares.push(new Square(width/2, i*100));
   }
+
+  //setup for the actual gameplay
+  noteTravelTime = (height - 100) / 5; // 5 is the speed of the notes
+
 }
+
 
 function draw() {
   background("white");
@@ -60,9 +68,7 @@ function draw() {
   if (state === "start screen") {
     imageMode(CORNER);
     background(startScreenBackground);
-    for (let button of buttons) {
-      button.update();
-    }
+    regularButtons();
     redMouseCircle();
   }
   //Switching to the level select screen if you click the start button
@@ -77,22 +83,16 @@ function draw() {
       square.display()
     }
     redMouseCircle();
-    for (let button of backButton) {
-      button.update();
-    }
+    backButtonNoS();
   }
   else if (state === "settings") {
     background(0);
     redMouseCircle();
-    for (let button of backButton) {
-      button.update();
-    }
+    backButtonNoS();
   }
   else if (state === "credits") {
     background("red");
-    for (let button of backButton) {
-      button.update();
-    }
+    backButtonNoS();
   }
   //Screen shown when you win a level
   else if (state === "win") {
@@ -136,6 +136,18 @@ function mouseWheel(event) {
   scrollProperties.spd = event.delta;
 }
 
+function regularButtons() {
+  for (let button of buttons) {
+    button.update();
+  }
+}
+
+function backButtonNoS() {
+  for (let button of backButton) {
+    button.update();
+  }
+}
+
 class Button {
   constructor(x, y, w, l, state, image) {
     this.x = x;
@@ -153,7 +165,7 @@ class Button {
   display(){
     fill("255");
     imageMode(CENTER);
-
+    
     //showing the image as a button with whatever image you input
     image(this.image, this.x, this.y, this.width, this.length);
   }
@@ -191,6 +203,7 @@ class Button {
   }
 }
 
+//squares in the temp scroll thing
 class Square {
   constructor(x, y) {
     this.x = x;
@@ -220,9 +233,10 @@ class Square {
 
 //BARS THAT DROP DOWN CODE
 
+//the class for the notes
 class Bars {
   constructor(key) {
-    this.key = key;
+    this.direction = direction;
     this.y = 0;
     this.speed = 5;
     this.pressed = false;
@@ -230,32 +244,168 @@ class Bars {
     const keySize = 60;
     const xOffset = width / 2 - 1.5 * keySize;
 
+    // 
+    switch (this.direction) {
+      case "LEFT":
+        this.x = xOffset;
+        this.arrowIndex = 0;
+        break;
+      case "UP":
+        this.x = xOffset + arrowSize;
+        this.arrowIndex = 1;
+        break;
+      case "DOWN":
+        this.x = xOffset + 2 * arrowSize;
+        this.arrowIndex = 2;
+        break;
+      case "RIGHT":
+        this.x = xOffset + 3 * arrowSize;
+        this.arrowIndex = 3;
+        break;
+  }
+}
+
+  //sets the notes speed based on the song BPM
+  update() {
+    this.y += this.speed;
   }
 
   display() {
+    let noteId;
+    let colorVal = color(0);
 
+
+    //holds the colours as well as the identifier of the notes to be handed out on creation
+    switch (this.direction) {
+      case "LEFT":
+        noteId = 0;
+        colorVal = color(255, 0, 0);
+        break;
+      case "UP":
+        noteId = 1;
+        colorVal = color(0, 255, 0);
+        break;
+      case "DOWN":
+        noteId = 2;
+        colorVal = color(0, 0, 255);
+        break;
+      case "RIGHT":
+        noteId = 3;
+        colorVal = color(255, 255, 0);
+        break;
+    }
+
+    //calls the function that draws the notes as well as translates the notes to the correct place on the screen
+    push();
+    translate(this.x, this.y);
+    drawArrow(0, 0, noteId, colorVal);
+    pop();
+  }
+  
+  offScreen() {
+    //tell if the bar has gone offscreen or not
+    return this.y > height;
+  }
+  
+  removeIfHit() {
+    //removes the bar if it's hit by the key
+    if (this.y >= height - 150 && this.y <= height - 50 && activeArrows[this.arrowIndex] && !this.pressed) {
+      this.pressed = true;
+      return true;
+    }
+    return false;
   }
 
-  
+  missed() {
+    //tells if you missed hittin ghte bar, so it'll keep going
+    return this.y > height - 50 && !this.pressed;
+  }
 }
 
 function keyPressed() { //askl
   let keyIndex;
 
-  if (keyCode === 65) {
+  if (keyCode === 65) {//a
     keyIndex = 0;
   } 
-  else if (keyCode === 83) {
+  else if (keyCode === 83) {//s
     keyIndex = 1;
   } 
-  else if (keyCode === 75) {
+  else if (keyCode === 75) {//k
     keyowIndex = 2;
   } 
-  else if (keyCode === 76) {
+  else if (keyCode === 76) {//l
+    keyIndex = 3;
+  }
+  
+  if (keyIndex !== undefined) {
+    //so long as any of the askl keys are pressed, the active keys will always be true
+    activeKeys[keyIndex] = true;
+  }
+
+  if (keyCode === 13) { //enter key
+    if (state === "level select screen") {
+      //if enter is pressed on the level selector, it'll go to the gameplay
+      state = "level1";
+      song.play();
+      gameStartTime = millis();
+    } 
+    else if (state === "level1") {
+      //if enter is pressed again on the gameplay screen, it'll go back to the level select screen
+      song.stop();
+      state = "level select screen";
+    } 
+    else if (state === "end") {
+      //end the game here
+    }
+  } 
+
+  else if (state === "start screen") {
+    //checking for the notes distance from perfection
+    const hitNoteIndex = notes.findIndex(note => {
+      return note.keyIndex === keyIndex && note.y >= height - 150 && note.y <= height - 50;
+    });
+
+    //if its a good hit, add points
+    if (hitNoteIndex !== -1 && !notes[hitNoteIndex].pressed) {
+      score += 100;
+      notes[hitNoteIndex].pressed = true;
+      notes.splice(hitNoteIndex, 1);
+    } 
+    //else if it isnt a good hit, deduct points 
+    else if (keyIndex !== undefined && (hitNoteIndex === -1 || (hitNoteIndex !== -1 && notes[hitNoteIndex].pressed))) {
+      score -= 50;
+    }
+  }
+}
+
+function songEnded() {
+  state = "start screeen";
+}
+
+function drawGame() {
+  background(0);
+  drawKeys();
+  // drawScore();
+  // drawPercentage();
+    generateNotes();
+
+}
+
+function keyReleased() {
+  let keyIndex;
+
+  if (keyCode === 65) {
+    keyIndex = 0;
+  } else if (keyCode === 83) {
+    keyIndex = 1;
+  } else if (keyCode === 75) {
+    keyIndex = 2;
+  } else if (keyCode === 76) {
     keyIndex = 3;
   }
 
   if (keyIndex !== undefined) {
-    activeKeys[keyIndex] = true;
+    activekeys[keyIndex] = false;
   }
 }
