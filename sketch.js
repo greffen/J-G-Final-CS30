@@ -14,6 +14,9 @@ let backButton = [];
 let levelSelectBackground, startScreenBackground;
 let startButton, settingsButton, creditsButton, tempDeathButton, goBackButton;
 
+//temp (DELETE ME)
+let fft;
+
 //the level select "things"
 let squares = [];
 const scrollProperties = {
@@ -59,6 +62,8 @@ function setup() {
   //setup for the actual gameplay
   noteTravelTime = (height - 100) / 5; // 5 is the speed of the notes
 
+  //temp (DELETE ME)
+  fft = new p5.FFT(0.8, 32);
 }
 
 
@@ -112,6 +117,7 @@ function draw() {
   //Scene shown while the actual gameplay is going
   else if(state === "level1") {
     background(0);
+    drawGame();
   }
 }
 
@@ -248,19 +254,19 @@ class Bars {
     switch (this.direction) {
       case "LEFT":
         this.x = xOffset;
-        this.arrowIndex = 0;
+        this.keyIndex = 0;
         break;
       case "UP":
-        this.x = xOffset + arrowSize;
-        this.arrowIndex = 1;
+        this.x = xOffset + keySize;
+        this.keyIndex = 1;
         break;
       case "DOWN":
-        this.x = xOffset + 2 * arrowSize;
-        this.arrowIndex = 2;
+        this.x = xOffset + 2 * keySize;
+        this.keyIndex = 2;
         break;
       case "RIGHT":
-        this.x = xOffset + 3 * arrowSize;
-        this.arrowIndex = 3;
+        this.x = xOffset + 3 * keySize;
+        this.keyIndex = 3;
         break;
   }
 }
@@ -298,7 +304,7 @@ class Bars {
     //calls the function that draws the notes as well as translates the notes to the correct place on the screen
     push();
     translate(this.x, this.y);
-    drawArrow(0, 0, noteId, colorVal);
+    drawKey(0, 0, noteId, colorVal);
     pop();
   }
   
@@ -309,7 +315,7 @@ class Bars {
   
   removeIfHit() {
     //removes the bar if it's hit by the key
-    if (this.y >= height - 150 && this.y <= height - 50 && activeArrows[this.arrowIndex] && !this.pressed) {
+    if (this.y >= height - 150 && this.y <= height - 50 && activeKeys[this.keyIndex] && !this.pressed) {
       this.pressed = true;
       return true;
     }
@@ -332,7 +338,7 @@ function keyPressed() { //askl
     keyIndex = 1;
   } 
   else if (keyCode === 75) {//k
-    keyowIndex = 2;
+    keyIndex = 2;
   } 
   else if (keyCode === 76) {//l
     keyIndex = 3;
@@ -392,6 +398,45 @@ function drawGame() {
 
 }
 
+function generateNotes() {
+  let currentTime = millis() - gameStartTime - noteTravelTime;
+
+  if (currentTime - lastNoteTime >= 200) {
+    let bass = fft.getEnergy("bass");
+    let mid = fft.getEnergy("mid");
+    let treble = fft.getEnergy("treble");
+    let lowMid = fft.getEnergy("lowMid");
+    let highMid = fft.getEnergy("highMid");
+
+    let direction = round(random(0, 3)); // randomly choose a direction
+
+    switch (direction) { // create a new note in the chosen direction
+      case 0: // left
+        if (bass > 230) { // adjust the threshold for the left bar
+          notes.push(new Bars("LEFT"));
+        }
+        break;
+      case 1: // up
+        if (mid > 225) { // adjust the threshold for the up bar
+          notes.push(new Bars("UP"));
+        }
+        break;
+      case 2: // down
+        if (lowMid > 100 && treble > 110) {
+          notes.push(new Bars("DOWN"));
+        }
+        break;
+      case 3: // right
+        if (highMid > 120 && bass > 100) {
+          notes.push(new Bars("RIGHT"));
+        }
+        break;
+    }
+
+    lastNoteTime = currentTime;
+  }
+}
+
 function keyReleased() {
   let keyIndex;
 
@@ -406,6 +451,70 @@ function keyReleased() {
   }
 
   if (keyIndex !== undefined) {
-    activekeys[keyIndex] = false;
+    activeKeys[keyIndex] = false;
+  }
+}
+
+function drawKeys() {
+  const keySize = 60;
+  const yPos = height - 100;
+  const xOffset = width / 2 - 1.5 * keySize;
+
+  for (let i = 0; i < 4; i++) {
+    let x = xOffset + i * keySize;
+    let colorVal = activeKeys[i] ? color(255, 255, 255) : color(0, 0, 0);
+    drawKey(x, yPos, i, colorVal);
+  }
+}
+
+
+function drawKey(x, y, rotation, colorVal) {
+  // a
+  if (rotation == 0) {
+    fill(colorVal)
+    rect(x, y, 55, 25);
+    rectMode(CENTER);
+    noStroke();
+    fill(255);
+    rect(x, y, 50, 20);
+    // creates inner black bar that is consistent between bars
+    fill(colorVal);
+    rect(x, y, 35, 8)
+  }
+  // s
+  else if (rotation == 1) {
+    fill(colorVal)
+    rect(x, y, 55, 25);
+    rectMode(CENTER);
+    noStroke(); 
+    fill(255);
+    rect(x, y, 50, 20);
+    // creates inner black bar that is consistent between bars
+    fill(colorVal);
+    rect(x, y, 35, 8);
+  }
+  // k
+  else if (rotation == 2) {
+    fill(colorVal)
+    rect(x, y, 55, 25);
+    rectMode(CENTER);
+    noStroke(); 
+    fill(255);
+    rect(x, y, 50, 20);
+    // creates inner black bar that is consistent between bars
+    fill(colorVal);
+    rect(x, y, 35, 8);
+  }
+  // l
+  else if (rotation == 3) {
+    fill(colorVal)
+    rect(x, y, 55, 25);
+    rectMode(CENTER);
+    noStroke();
+    fill(255);
+    rect(x, y, 50, 20);
+    // creates inner black bar that is consistent between bars
+    fill(colorVal);
+    rect(x, y, 35, 8)
   }
 }
