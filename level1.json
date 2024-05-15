@@ -1,9 +1,9 @@
 {
     "song": "SongName",
     "beats": [
-      {"time": 0},
-      {"time": 0.5},
-      {"time": 1},
+      {"time": 0, "bar": 1},
+      {"time": 0.5, "bar":2},
+      {"time": 1, "bar":3},
       {"time": 1.5},
       {"time": 2},
       {"time": 2.5},
