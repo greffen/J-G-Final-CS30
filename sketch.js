@@ -29,11 +29,12 @@ let notes = [];
 let lastNoteTime = 0;
 let gameStartTime;
 let activeKeys = [false, false, false, false]; 
+let noteTravelTime;
 
 
 function preload() {
   startButton = loadImage("Assets/Images/unnamed.png");
- // goBackButton = loadImages("Assets/Images/XXX.png");
+  // goBackButton = loadImages("Assets/Images/XXX.png");
   settingsButton = loadImage("Assets/Images/settings button.png");
   startScreenBackground = loadImage("Assets/Images/intensewalrusmissionfr.png");
   levelSelectBackground = loadImage("Assets/Images/flower_background.jpg");
@@ -45,9 +46,9 @@ function setup() {
   //adds all buttons to the "buttons" array(except the back button which is in its own array that is displayed off the start screen as well)
   let startGameButton = new Button(width-200, height/2 - 200, width/5, height/5, "level select screen", startButton);//(location:)x, y, (size:)width, height, (where it takes you:)string, name
   buttons.push(startGameButton);
-  let settingsSelectButton = new Button(width-200, height/2, width/5, height/5, "settings", settingsButton)
+  let settingsSelectButton = new Button(width-200, height/2, width/5, height/5, "settings", settingsButton);
   buttons.push(settingsSelectButton);
-  let infoCreditsButton = new Button(width-200, height/2 + 200, width/5, height/5, "credits", creditsButton)
+  let infoCreditsButton = new Button(width-200, height/2 + 200, width/5, height/5, "credits", creditsButton);
   buttons.push(infoCreditsButton);
   let startLevel1 = new Button(width/2, height/2, width/5, height/5, "level1", settingsButton);
   buttons.push(startLevel1);
@@ -63,7 +64,7 @@ function setup() {
   noteTravelTime = (height - 100) / 5; // 5 is the speed of the notes
 
   //temp (DELETE ME)
-  fft = new p5.FFT(0.8, 32);
+  // fft = new p5.FFT(0.8, 32);
 }
 
 
@@ -85,7 +86,7 @@ function draw() {
     imageMode(CORNER);
     background(levelSelectBackground);
     for (let square of squares) {
-      square.display()
+      square.display();
     }
     redMouseCircle();
     backButtonNoS();
@@ -241,7 +242,7 @@ class Square {
 
 //the class for the notes
 class Bars {
-  constructor(key) {
+  constructor(direction) {
     this.direction = direction;
     this.y = 0;
     this.speed = 5;
@@ -252,24 +253,24 @@ class Bars {
 
     // 
     switch (this.direction) {
-      case "LEFT":
-        this.x = xOffset;
-        this.keyIndex = 0;
-        break;
-      case "UP":
-        this.x = xOffset + keySize;
-        this.keyIndex = 1;
-        break;
-      case "DOWN":
-        this.x = xOffset + 2 * keySize;
-        this.keyIndex = 2;
-        break;
-      case "RIGHT":
-        this.x = xOffset + 3 * keySize;
-        this.keyIndex = 3;
-        break;
+    case "LEFT":
+      this.x = xOffset;
+      this.keyIndex = 0;
+      break;
+    case "UP":
+      this.x = xOffset + keySize;
+      this.keyIndex = 1;
+      break;
+    case "DOWN":
+      this.x = xOffset + 2 * keySize;
+      this.keyIndex = 2;
+      break;
+    case "RIGHT":
+      this.x = xOffset + 3 * keySize;
+      this.keyIndex = 3;
+      break;
+    }
   }
-}
 
   //sets the notes speed based on the song BPM
   update() {
@@ -283,22 +284,22 @@ class Bars {
 
     //holds the colours as well as the identifier of the notes to be handed out on creation
     switch (this.direction) {
-      case "LEFT":
-        noteId = 0;
-        colorVal = color(255, 0, 0);
-        break;
-      case "UP":
-        noteId = 1;
-        colorVal = color(0, 255, 0);
-        break;
-      case "DOWN":
-        noteId = 2;
-        colorVal = color(0, 0, 255);
-        break;
-      case "RIGHT":
-        noteId = 3;
-        colorVal = color(255, 255, 0);
-        break;
+    case "LEFT":
+      noteId = 0;
+      colorVal = color(255, 0, 0);
+      break;
+    case "UP":
+      noteId = 1;
+      colorVal = color(0, 255, 0);
+      break;
+    case "DOWN":
+      noteId = 2;
+      colorVal = color(0, 0, 255);
+      break;
+    case "RIGHT":
+      noteId = 3;
+      colorVal = color(255, 255, 0);
+      break;
     }
 
     //calls the function that draws the notes as well as translates the notes to the correct place on the screen
@@ -353,12 +354,12 @@ function keyPressed() { //askl
     if (state === "level select screen") {
       //if enter is pressed on the level selector, it'll go to the gameplay
       state = "level1";
-      song.play();
+      // song.play();
       gameStartTime = millis();
     } 
     else if (state === "level1") {
       //if enter is pressed again on the gameplay screen, it'll go back to the level select screen
-      song.stop();
+      // song.stop();
       state = "level select screen";
     } 
     else if (state === "end") {
@@ -366,7 +367,8 @@ function keyPressed() { //askl
     }
   } 
 
-  else if (state === "start screen") {
+  else if (state === "level1") {
+    let score = 0;
     //checking for the notes distance from perfection
     const hitNoteIndex = notes.findIndex(note => {
       return note.keyIndex === keyIndex && note.y >= height - 150 && note.y <= height - 50;
@@ -394,7 +396,7 @@ function drawGame() {
   drawKeys();
   // drawScore();
   // drawPercentage();
-    generateNotes();
+  generateNotes();
 
 }
 
@@ -411,26 +413,26 @@ function generateNotes() {
     let direction = round(random(0, 3)); // randomly choose a direction
 
     switch (direction) { // create a new note in the chosen direction
-      case 0: // left
-        if (bass > 230) { // adjust the threshold for the left bar
-          notes.push(new Bars("LEFT"));
-        }
-        break;
-      case 1: // up
-        if (mid > 225) { // adjust the threshold for the up bar
-          notes.push(new Bars("UP"));
-        }
-        break;
-      case 2: // down
-        if (lowMid > 100 && treble > 110) {
-          notes.push(new Bars("DOWN"));
-        }
-        break;
-      case 3: // right
-        if (highMid > 120 && bass > 100) {
-          notes.push(new Bars("RIGHT"));
-        }
-        break;
+    case 0: // left
+      if (bass > 230) { // adjust the threshold for the left bar
+        notes.push(new Bars("LEFT"));
+      }
+      break;
+    case 1: // up
+      if (mid > 225) { // adjust the threshold for the up bar
+        notes.push(new Bars("UP"));
+      }
+      break;
+    case 2: // down
+      if (lowMid > 100 && treble > 110) {
+        notes.push(new Bars("DOWN"));
+      }
+      break;
+    case 3: // right
+      if (highMid > 120 && bass > 100) {
+        notes.push(new Bars("RIGHT"));
+      }
+      break;
     }
 
     lastNoteTime = currentTime;
@@ -442,11 +444,14 @@ function keyReleased() {
 
   if (keyCode === 65) {
     keyIndex = 0;
-  } else if (keyCode === 83) {
+  } 
+  else if (keyCode === 83) {
     keyIndex = 1;
-  } else if (keyCode === 75) {
+  } 
+  else if (keyCode === 75) {
     keyIndex = 2;
-  } else if (keyCode === 76) {
+  } 
+  else if (keyCode === 76) {
     keyIndex = 3;
   }
 
@@ -470,8 +475,8 @@ function drawKeys() {
 
 function drawKey(x, y, rotation, colorVal) {
   // a
-  if (rotation == 0) {
-    fill(colorVal)
+  if (rotation === 0) {
+    fill(colorVal);
     rect(x, y, 55, 25);
     rectMode(CENTER);
     noStroke();
@@ -479,11 +484,11 @@ function drawKey(x, y, rotation, colorVal) {
     rect(x, y, 50, 20);
     // creates inner black bar that is consistent between bars
     fill(colorVal);
-    rect(x, y, 35, 8)
+    rect(x, y, 35, 8);
   }
   // s
-  else if (rotation == 1) {
-    fill(colorVal)
+  else if (rotation === 1) {
+    fill(colorVal);
     rect(x, y, 55, 25);
     rectMode(CENTER);
     noStroke(); 
@@ -494,8 +499,8 @@ function drawKey(x, y, rotation, colorVal) {
     rect(x, y, 35, 8);
   }
   // k
-  else if (rotation == 2) {
-    fill(colorVal)
+  else if (rotation === 2) {
+    fill(colorVal);
     rect(x, y, 55, 25);
     rectMode(CENTER);
     noStroke(); 
@@ -506,8 +511,8 @@ function drawKey(x, y, rotation, colorVal) {
     rect(x, y, 35, 8);
   }
   // l
-  else if (rotation == 3) {
-    fill(colorVal)
+  else if (rotation === 3) {
+    fill(colorVal);
     rect(x, y, 55, 25);
     rectMode(CENTER);
     noStroke();
@@ -515,6 +520,6 @@ function drawKey(x, y, rotation, colorVal) {
     rect(x, y, 50, 20);
     // creates inner black bar that is consistent between bars
     fill(colorVal);
-    rect(x, y, 35, 8)
+    rect(x, y, 35, 8);
   }
 }
