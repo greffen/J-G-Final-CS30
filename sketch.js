@@ -381,7 +381,7 @@ function keyPressed() { //askl
       notes.splice(hitNoteIndex, 1);
     } 
     //else if it isnt a good hit, deduct points 
-    else if (keyIndex !== undefined && (hitNoteIndex === -1 || (hitNoteIndex !== -1 && notes[hitNoteIndex].pressed))) {
+    else if (keyIndex !== undefined && (hitNoteIndex === -1 || hitNoteIndex !== -1 && notes[hitNoteIndex].pressed)) {
       score -= 50;
     }
   }
