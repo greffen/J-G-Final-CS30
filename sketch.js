@@ -227,17 +227,6 @@ class Square {
   }
 }
 
-//scroll list (for later): 
-//make the list loop on the screen
-//a selected item
-//make that selected item grow
-//moved by mouse drag
-//figure out levels
-
-
-
-
-
 //BARS THAT DROP DOWN CODE
 
 //the class for the notes
@@ -251,7 +240,6 @@ class Bars {
     const keySize = 60;
     const xOffset = width / 2 - 1.5 * keySize;
 
-    // 
     switch (this.direction) {
     case "LEFT":
       this.x = xOffset;
@@ -401,41 +389,106 @@ function drawGame() {
 }
 
 function generateNotes() {
-  let currentTime = millis() - gameStartTime - noteTravelTime;
+  //reads the .SM file data
+  let smData = loadStrings("C:/Users/0101271/OneDrive - Saskatoon Public Schools/Documents/GitHub/J-G-Final-CS30/Assets/Tracks/temp.sm"); //this is very temp
 
-  if (currentTime - lastNoteTime >= 200) {
-    let bass = fft.getEnergy("bass");
-    let mid = fft.getEnergy("mid");
-    let treble = fft.getEnergy("treble");
-    let lowMid = fft.getEnergy("lowMid");
-    let highMid = fft.getEnergy("highMid");
+  //function to actually parse the info contained in the .SM file
+  function parseSMFile(smData) {
+    let notesData = {}; //the object to store parsed data
+    let currentSection = ""; //the variable to keep track of only the current section being parsed
 
-    let direction = round(random(0, 3)); // randomly choose a direction
-
-    switch (direction) { // create a new note in the chosen direction
-    case 0: // left
-      if (bass > 230) { // adjust the threshold for the left bar
-        notes.push(new Bars("LEFT"));
+    //iterate through each line of the SM file
+    for (let line of smData) {
+      //check to see if the line starts with "#" (denoting sections of information)
+      if (line.startsWith("#")) {
+        //extract the section name
+        currentSection = line.substring(1).trim();
+        notesData[currentSection] = []; //create an array to store data for the section
       }
-      break;
-    case 1: // up
-      if (mid > 225) { // adjust the threshold for the up bar
-        notes.push(new Bars("UP"));
+      else {
+        //if it's NOT a section header (meaning it is data), push the line to the corresponding section array
+        notesData[currentSection].push(line.trim());
       }
-      break;
-    case 2: // down
-      if (lowMid > 100 && treble > 110) {
-        notes.push(new Bars("DOWN"));
-      }
-      break;
-    case 3: // right
-      if (highMid > 120 && bass > 100) {
-        notes.push(new Bars("RIGHT"));
-      }
-      break;
     }
 
-    lastNoteTime = currentTime;
+    return notesData;
+  }
+
+  function extractBPMChanges(notesData) {
+    //extract the BPMs section from parsed data
+    let bpmSection = notesData["BPMS"];
+    let bpmChanges = {};
+
+    //iterate through each line of the BPMs section
+    for (let line of bpmSection) {
+      //split the line into beat and BPM
+      let [beat, bpm] = line.split("=");
+      //stores the BPM change in the bpmChanges object
+      bpmChanges[parseFloat(beat)] = parseFloat(bpm);
+    }
+
+    return bpmChanges;
+  }
+
+  function calculateBPMToTime(bpmChanges) {
+    let bpmToTime = {};
+    let currentTime = 0;
+
+    //iterate through each BPM change
+    for (let beat in bpmChanges) {
+      let bpm = bpmChanges[beat];
+      let time = currentTime + (beat - currentTime) * 60 / bpm; //calculate time based on BPM change
+      bpmToTime[beat] = time; //store time corresponding to each beat
+      currentTime = time; //update current time
+    }
+
+    return bpmToTime;
+  }
+
+  function extractNotesData(notesData) {
+    //extract the NOTES section from parsed data
+    return notesData["NOTES"];
+  }
+
+  function convertNotesToGameNotes(notes, bpmToTime) {
+    let gameNotes = [];
+  
+    //iterate through each note in the notes data
+    for (let note of notes) {
+      //parse the note data to extract direction and timing
+      let [direction, timing] = note.split(":");
+      //convert timing to game time based on BPM changes
+      let time = bpmToTime[parseFloat(timing)];
+      //create a game note object with direction and timing information
+      let gameNote = {
+        direction: direction.trim(),
+        time: time
+      };
+      //add the game note to the gameNotes array
+      gameNotes.push(gameNote);
+    }
+  
+    return gameNotes;
+  }
+
+  let notesData = parseSMFile(smData);
+
+  let bpmChanges = extractBPMChanges(notesData);
+
+  let bpmToTime = calculateBPMToTime(bpmChanges);
+
+  let notes = extractNotesData(notesData);
+
+  let gameNotes = convertNotesToGameNotes(notes, bpmToTime);
+
+  //create instances of the Bars class for each note
+  for (let i = 0; i < gameNotes.length; i++) {
+    let note = gameNotes[i];
+    let bar = new Bars(note.direction); //the new instance of Bars
+    // Set the position and timing of the bar based on parsed data
+    bar.y = note.time * noteTravelTime; //this assumes noteTravelTime is set correctly
+    // Add the bar to the notes array
+    notes.push(bar);
   }
 }
 
