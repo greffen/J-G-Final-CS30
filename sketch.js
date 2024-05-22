@@ -472,22 +472,16 @@ function generateNotes() {
   }
 
   let notesData = parseSMFile(smData);
-
   let bpmChanges = extractBPMChanges(notesData);
-
   let bpmToTime = calculateBPMToTime(bpmChanges);
-
   let notes = extractNotesData(notesData);
-
   let gameNotes = convertNotesToGameNotes(notes, bpmToTime);
 
   //create instances of the Bars class for each note
   for (let i = 0; i < gameNotes.length; i++) {
     let note = gameNotes[i];
     let bar = new Bars(note.direction); //the new instance of Bars
-    // Set the position and timing of the bar based on parsed data
     bar.y = note.time * noteTravelTime; //this assumes noteTravelTime is set correctly
-    // Add the bar to the notes array
     notes.push(bar);
   }
 }
