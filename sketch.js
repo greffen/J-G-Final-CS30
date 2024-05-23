@@ -390,15 +390,30 @@ function drawGame() {
 
 function generateNotes() {
   //reads the .SM file data
-  let smData = loadStrings("C:/Users/0101271/OneDrive - Saskatoon Public Schools/Documents/GitHub/J-G-Final-CS30/Assets/Tracks/temp.sm"); //this is very temp
+  let smData = loadStrings("Assets/Tracks/temp.sm"); //this is very temp
+
+  let notesData = parseSMFile(smData);
+  let bpmChanges = extractBPMChanges(notesData);
+  let bpmToTime = calculateBPMToTime(bpmChanges);
+  let notes = extractNotesData(notesData);
+  let gameNotes = convertNotesToGameNotes(notes, bpmToTime);
+
+  //create instances of the Bars class for each note
+  for (let i = 0; i < gameNotes.length; i++) {
+    let note = gameNotes[i];
+    let bar = new Bars(note.direction); //the new instance of Bars
+    bar.y = note.time * noteTravelTime; //this assumes noteTravelTime is set correctly
+    notes.push(bar);
+  }
 
   //function to actually parse the info contained in the .SM file
-  function parseSMFile(smData) {
+  function parseSMFile(smData) {  
     let notesData = {}; //the object to store parsed data
     let currentSection = ""; //the variable to keep track of only the current section being parsed
 
     //iterate through each line of the SM file
     for (let line of smData) {
+      console.log(line);
       //check to see if the line starts with "#" (denoting sections of information)
       if (line.startsWith("#")) {
         //extract the section name
@@ -417,6 +432,7 @@ function generateNotes() {
   function extractBPMChanges(notesData) {
     //extract the BPMs section from parsed data
     let bpmSection = notesData["BPMS"];
+    console.log(bpmSection);
     let bpmChanges = {};
 
     //iterate through each line of the BPMs section
@@ -469,20 +485,6 @@ function generateNotes() {
     }
   
     return gameNotes;
-  }
-
-  let notesData = parseSMFile(smData);
-  let bpmChanges = extractBPMChanges(notesData);
-  let bpmToTime = calculateBPMToTime(bpmChanges);
-  let notes = extractNotesData(notesData);
-  let gameNotes = convertNotesToGameNotes(notes, bpmToTime);
-
-  //create instances of the Bars class for each note
-  for (let i = 0; i < gameNotes.length; i++) {
-    let note = gameNotes[i];
-    let bar = new Bars(note.direction); //the new instance of Bars
-    bar.y = note.time * noteTravelTime; //this assumes noteTravelTime is set correctly
-    notes.push(bar);
   }
 }
 
