@@ -14,9 +14,6 @@ let backButton = [];
 let levelSelectBackground, startScreenBackground;
 let startButton, settingsButton, creditsButton, tempDeathButton, goBackButton;
 
-//temp (DELETE ME)
-let fft;
-
 //the level select "things"
 let squares = [];
 const scrollProperties = {
@@ -62,9 +59,6 @@ function setup() {
 
   //setup for the actual gameplay
   noteTravelTime = (height - 100) / 5; // 5 is the speed of the notes
-
-  //temp (DELETE ME)
-  // fft = new p5.FFT(0.8, 32);
 }
 
 
@@ -389,22 +383,23 @@ function drawGame() {
 }
 
 function generateNotes() {
-  //reads the .SM file data
-  let smData = loadStrings("Assets/Tracks/temp.sm"); //this is very temp
+  // Read the .SM file data
+  loadStrings("Assets/Tracks/temp.sm", function(smData) {
+    // Callback function executed when data is loaded
+    let notesData = parseSMFile(smData);
+    let bpmChanges = extractBPMChanges(notesData);
+    let bpmToTime = calculateBPMToTime(bpmChanges);
+    let notes = extractNotesData(notesData);
+    let gameNotes = convertNotesToGameNotes(notes, bpmToTime);
 
-  let notesData = parseSMFile(smData);
-  let bpmChanges = extractBPMChanges(notesData);
-  let bpmToTime = calculateBPMToTime(bpmChanges);
-  let notes = extractNotesData(notesData);
-  let gameNotes = convertNotesToGameNotes(notes, bpmToTime);
-
-  //create instances of the Bars class for each note
-  for (let i = 0; i < gameNotes.length; i++) {
-    let note = gameNotes[i];
-    let bar = new Bars(note.direction); //the new instance of Bars
-    bar.y = note.time * noteTravelTime; //this assumes noteTravelTime is set correctly
-    notes.push(bar);
-  }
+    // Now process the gameNotes array or do any other necessary operations
+    for (let i = 0; i < gameNotes.length; i++) {
+      let note = gameNotes[i];
+      let bar = new Bars(note.direction);
+      bar.y = note.time * noteTravelTime;
+      notes.push(bar);
+    }
+  });
 
   //function to actually parse the info contained in the .SM file
   function parseSMFile(smData) {  
@@ -413,7 +408,6 @@ function generateNotes() {
 
     //iterate through each line of the SM file
     for (let line of smData) {
-      console.log(line);
       //check to see if the line starts with "#" (denoting sections of information)
       if (line.startsWith("#")) {
         //extract the section name
@@ -432,34 +426,32 @@ function generateNotes() {
   function extractBPMChanges(notesData) {
     //extract the BPMs section from parsed data
     let bpmSection = notesData["BPMS"];
-    console.log(bpmSection);
     let bpmChanges = {};
-
-    //iterate through each line of the BPMs section
-    for (let line of bpmSection) {
+  
+    // Iterate over each BPM change using Object.entries()
+    for (let [beat, bpm] of Object.entries(bpmSection)) {
       //split the line into beat and BPM
-      let [beat, bpm] = line.split("=");
-      //stores the BPM change in the bpmChanges object
-      bpmChanges[parseFloat(beat)] = parseFloat(bpm);
+      let [beatValue, bpmValue] = bpm.split("=");
+      //store the BPM change in the bpmChanges object
+      bpmChanges[parseFloat(beatValue)] = parseFloat(bpmValue);
     }
-
+  
     return bpmChanges;
   }
 
   function calculateBPMToTime(bpmChanges) {
-    let bpmToTime = {};
-    let currentTime = 0;
+  let bpmToTime = {};
+  let currentTime = 0;
 
-    //iterate through each BPM change
-    for (let beat in bpmChanges) {
-      let bpm = bpmChanges[beat];
-      let time = currentTime + (beat - currentTime) * 60 / bpm; //calculate time based on BPM change
-      bpmToTime[beat] = time; //store time corresponding to each beat
-      currentTime = time; //update current time
-    }
-
-    return bpmToTime;
+  //iterate over each BPM change using Object.entries()
+  for (let [beat, bpm] of Object.entries(bpmChanges)) {
+    let time = currentTime + (beat - currentTime) * 60 / bpm;
+    bpmToTime[beat] = time;
+    currentTime = time;
   }
+
+  return bpmToTime;
+}
 
   function extractNotesData(notesData) {
     //extract the NOTES section from parsed data
