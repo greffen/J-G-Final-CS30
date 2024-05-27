@@ -383,16 +383,16 @@ function drawGame() {
 }
 
 function generateNotes() {
-  // Read the .SM file data
-  loadStrings("Assets/Tracks/temp.sm", function(smData) {
-    // Callback function executed when data is loaded
+  //read the .SM file data
+  loadStrings("Assets/Tracks/Syrup.sm", function(smData) {
+    //callback function executed when data is loaded
     let notesData = parseSMFile(smData);
     let bpmChanges = extractBPMChanges(notesData);
     let bpmToTime = calculateBPMToTime(bpmChanges);
     let notes = extractNotesData(notesData);
     let gameNotes = convertNotesToGameNotes(notes, bpmToTime);
 
-    // Now process the gameNotes array or do any other necessary operations
+    //now process the gameNotes array or do any other necessary operations
     for (let i = 0; i < gameNotes.length; i++) {
       let note = gameNotes[i];
       let bar = new Bars(note.direction);
@@ -418,6 +418,7 @@ function generateNotes() {
         //if it's NOT a section header (meaning it is data), push the line to the corresponding section array
         notesData[currentSection].push(line.trim());
       }
+      //console.log(line);
     }
 
     return notesData;
@@ -429,29 +430,30 @@ function generateNotes() {
     let bpmChanges = {};
   
     // Iterate over each BPM change using Object.entries()
-    for (let [beat, bpm] of Object.entries(bpmSection)) {
+    for (let bpm  of bpmSection) {
       //split the line into beat and BPM
       let [beatValue, bpmValue] = bpm.split("=");
       //store the BPM change in the bpmChanges object
       bpmChanges[parseFloat(beatValue)] = parseFloat(bpmValue);
     }
   
+    console.log(bpmChanges);
     return bpmChanges;
   }
 
   function calculateBPMToTime(bpmChanges) {
-  let bpmToTime = {};
-  let currentTime = 0;
+    let bpmToTime = {};
+    let currentTime = 0;
 
-  //iterate over each BPM change using Object.entries()
-  for (let [beat, bpm] of Object.entries(bpmChanges)) {
-    let time = currentTime + (beat - currentTime) * 60 / bpm;
-    bpmToTime[beat] = time;
-    currentTime = time;
+    //iterate over each BPM change using Object.entries()
+    for (let [beat, bpm] of Object.entries(bpmChanges)) {
+      let time = currentTime + (beat - currentTime) * 60 / bpm;
+      bpmToTime[beat] = time;
+      currentTime = time;
+    }
+
+    return bpmToTime;
   }
-
-  return bpmToTime;
-}
 
   function extractNotesData(notesData) {
     //extract the NOTES section from parsed data
