@@ -4,7 +4,7 @@
 //
 // Rhythm based game with piano keys
 //
-// Extras for Experts: swtich, 
+// Extras for Experts: swtich, regex - replaceAll, 
 
 //the menu "things"
 let state = "start screen";
@@ -410,9 +410,16 @@ function generateNotes() {
     for (let line of smData) {
       //check to see if the line starts with "#" (denoting sections of information)
       if (line.startsWith("#")) {
-        //extract the section name
-        currentSection = line.substring(1).trim();
+        //extract the section name minus the # and if it's the BPMS first case, add the text after the ":" to another line 
+        currentSection = line.substring(1).trim().replaceAll(/:.*/g, "");
         notesData[currentSection] = []; //create an array to store data for the section
+
+        //the adding ofr the line after the ":"
+        let firstEntry = line.match(/:.*/g)[0].replaceAll(":","");
+        if (currentSection === "BPMS") {
+          notesData[currentSection].push(firstEntry);
+        }
+
       }
       else {
         //if it's NOT a section header (meaning it is data), push the line to the corresponding section array
@@ -429,15 +436,14 @@ function generateNotes() {
     let bpmSection = notesData["BPMS"];
     let bpmChanges = {};
   
-    // Iterate over each BPM change using Object.entries()
+    //iterate over each BPM change using Object.entries()
     for (let bpm  of bpmSection) {
       //split the line into beat and BPM
       let [beatValue, bpmValue] = bpm.split("=");
       //store the BPM change in the bpmChanges object
       bpmChanges[parseFloat(beatValue)] = parseFloat(bpmValue);
     }
-  
-    console.log(bpmChanges);
+
     return bpmChanges;
   }
 
