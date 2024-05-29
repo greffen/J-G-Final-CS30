@@ -52,7 +52,7 @@ function setup() {
   let goBackButton = new Button(0 + width/12, 0 + height/12, width/8, height/10, state, settingsButton);
   backButton.push(goBackButton);
   
-  //Initialize squares
+  //stupid scroll squares
   for (let i = 0; i < 100; i++) {
     squares.push(new Square(width/2, i*100));
   }
@@ -192,7 +192,7 @@ class Button {
   mouseClicked() {
     //look if you are within the button
     if (mouseX > this.x - this.width / 2 && mouseX < this.x + this.width / 2 &&
-        mouseY > this.y - this.length / 2 && mouseY < this.y + this.length / 2) {
+        mouseY > this.y - this.length / 2 && mouseY < this.y + this.length / 2 && state === "start screen") {
       //change state to the state the button changes you to
       if (backButton.includes(this)) {
         state = lastState;
