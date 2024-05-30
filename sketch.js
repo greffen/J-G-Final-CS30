@@ -201,6 +201,12 @@ class Button {
         state = this.state;
       }
     }
+    else if (mouseX > this.x - this.width / 2 && mouseX < this.x + this.width / 2 &&
+        mouseY > this.y - this.length / 2 && mouseY < this.y + this.length / 2 && state !== "start screen") {
+      if (backButton.includes(this)) {
+        state = lastState;
+      }
+    }
   }
 }
 
@@ -432,18 +438,34 @@ function generateNotes() {
   }
 
   function extractBPMChanges(notesData) {
-    //extract the BPMs section from parsed data
     let bpmSection = notesData["BPMS"];
     let bpmChanges = {};
   
-    //iterate over each BPM change using Object.entries()
-    for (let bpm  of bpmSection) {
-      //split the line into beat and BPM
-      let [beatValue, bpmValue] = bpm.split("=");
-      //store the BPM change in the bpmChanges object
-      bpmChanges[parseFloat(beatValue)] = parseFloat(bpmValue);
+    // Split the BPM section into individual BPM entries
+    let bpmEntries = bpmSection.join(",").split(";").filter(entry => entry.trim() !== "");
+  
+    // Iterate over each BPM entry
+    for (let bpmEntry of bpmEntries) {
+      // Split the entry into beat and BPM pairs using '=' as delimiter
+      let pairs = bpmEntry.split(",");
+  
+      // Iterate over each pair to extract beat and BPM
+      for (let pair of pairs) {
+        let [beatValue, bpmValue] = pair.split("=");
+        let beat = parseFloat(beatValue);
+        let bpm = parseFloat(bpmValue);
+  
+        // Check if beat and BPM are valid numbers (not NaN)
+        if (!isNaN(beat) && !isNaN(bpm)) {
+          // Store the BPM change in the bpmChanges object
+          bpmChanges[beat] = bpm;
+        } 
+        else {
+          console.error("Invalid BPM entry:", pair);
+        }
+      }
     }
-
+  
     return bpmChanges;
   }
 
@@ -451,14 +473,15 @@ function generateNotes() {
     let bpmToTime = {};
     let currentTime = 0;
 
+
     //iterate over each BPM change using Object.entries()
     for (let [beat, bpm] of Object.entries(bpmChanges)) {
-      let time = currentTime + (beat - currentTime) * 60 / bpm;
+      let time = currentTime + (beat - currentTime) * 60 / bpm; //time in seconds
       bpmToTime[beat] = time;
       currentTime = time;
     }
-
     return bpmToTime;
+    
   }
 
   function extractNotesData(notesData) {
@@ -487,6 +510,7 @@ function generateNotes() {
     return gameNotes;
   }
 }
+
 
 function keyReleased() {
   let keyIndex;
