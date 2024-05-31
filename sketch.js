@@ -420,7 +420,7 @@ function generateNotes() {
         currentSection = line.substring(1).trim().replaceAll(/:.*/g, "");
         notesData[currentSection] = []; //create an array to store data for the section
 
-        //the adding ofr the line after the ":"
+        //the adding of the line after the ":"
         let firstEntry = line.match(/:.*/g)[0].replaceAll(":","");
         if (currentSection === "BPMS") {
           notesData[currentSection].push(firstEntry);
@@ -441,28 +441,35 @@ function generateNotes() {
     let bpmSection = notesData["BPMS"];
     let bpmChanges = {};
   
-    // Split the BPM section into individual BPM entries
+    //split the BPM section into individual BPM entries
     let bpmEntries = bpmSection.join(",").split(";").filter(entry => entry.trim() !== "");
-  
+    
     // Iterate over each BPM entry
     for (let bpmEntry of bpmEntries) {
-      // Split the entry into beat and BPM pairs using '=' as delimiter
+      //split the entry into beat and BPM pairs using '=' as delimiter
       let pairs = bpmEntry.split(",");
-  
+      
+      pairs = dePair(pairs);
+
       // Iterate over each pair to extract beat and BPM
       for (let pair of pairs) {
         let [beatValue, bpmValue] = pair.split("=");
+        // beatValue.splice(); 
         let beat = parseFloat(beatValue);
         let bpm = parseFloat(bpmValue);
-  
+
+        console.log(bpm);
+        console.log(beat);
         // Check if beat and BPM are valid numbers (not NaN)
         if (!isNaN(beat) && !isNaN(bpm)) {
           // Store the BPM change in the bpmChanges object
           bpmChanges[beat] = bpm;
         } 
         else {
-          console.error("Invalid BPM entry:", pair);
+          console.error("AHHHHH");
+          // console.log(bpmValue);
         }
+      
       }
     }
   
@@ -595,4 +602,15 @@ function drawKey(x, y, rotation, colorVal) {
     fill(colorVal);
     rect(x, y, 35, 8);
   }
+}
+
+function dePair(thePair) {
+  let newPair = [];
+   
+  for (let i = 0; i < thePair.length; i++) {
+    if (i % 2 === 0) {
+      newPair.push(thePair[i]);
+    }    
+  }
+  return newPair;
 }
