@@ -431,7 +431,6 @@ function generateNotes() {
         //if it's NOT a section header (meaning it is data), push the line to the corresponding section array
         notesData[currentSection].push(line.trim());
       }
-      //console.log(line);
     }
 
     return notesData;
@@ -444,30 +443,27 @@ function generateNotes() {
     //split the BPM section into individual BPM entries
     let bpmEntries = bpmSection.join(",").split(";").filter(entry => entry.trim() !== "");
     
-    // Iterate over each BPM entry
+    //iterate over each BPM entry
     for (let bpmEntry of bpmEntries) {
       //split the entry into beat and BPM pairs using '=' as delimiter
       let pairs = bpmEntry.split(",");
       
       pairs = dePair(pairs);
 
-      // Iterate over each pair to extract beat and BPM
+      //iterate over each pair to extract beat and BPM
       for (let pair of pairs) {
         let [beatValue, bpmValue] = pair.split("=");
         // beatValue.splice(); 
         let beat = parseFloat(beatValue);
         let bpm = parseFloat(bpmValue);
 
-        console.log(bpm);
-        console.log(beat);
         // Check if beat and BPM are valid numbers (not NaN)
         if (!isNaN(beat) && !isNaN(bpm)) {
-          // Store the BPM change in the bpmChanges object
+          //store the BPM change in the bpmChanges object
           bpmChanges[beat] = bpm;
         } 
         else {
           console.error("AHHHHH");
-          // console.log(bpmValue);
         }
       
       }
@@ -493,28 +489,36 @@ function generateNotes() {
 
   function extractNotesData(notesData) {
     //extract the NOTES section from parsed data
+    notesData["NOTES"].splice(0, 5);
+    console.log(notesData["NOTES"]);
     return notesData["NOTES"];
+
   }
 
   function convertNotesToGameNotes(notes, bpmToTime) {
     let gameNotes = [];
-  
+
     //iterate through each note in the notes data
-    for (let note of notes) {
-      //parse the note data to extract direction and timing
-      let [direction, timing] = note.split(":");
-      //convert timing to game time based on BPM changes
-      let time = bpmToTime[parseFloat(timing)];
-      //create a game note object with direction and timing information
-      let gameNote = {
-        direction: direction.trim(),
-        time: time
-      };
-      //add the game note to the gameNotes array
-      gameNotes.push(gameNote);
+    for (let note = 0; note < notes.length; note++) {
+      if (notes[note].includes("//") || notes[note].includes(",")) { 
+        notes.splice(note, 1);
+      }
+      else {
+        console.log(notes);
+        //parse the note data to extract direction and timing
+        let [direction, timing] = note.split(":");
+        //convert timing to game time based on BPM changes
+        let time = bpmToTime[parseFloat(timing)];
+        //create a game note object with direction and timing information
+        let gameNote = {
+          direction: direction.trim(),
+          timing: time
+        };
+        gameNotes.push(gameNote);
+      }
+      // console.log(gameNotes);
+      return gameNotes;
     }
-  
-    return gameNotes;
   }
 }
 
