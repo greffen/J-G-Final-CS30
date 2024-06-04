@@ -406,121 +406,112 @@ function generateNotes() {
       notes.push(bar);
     }
   });
-
-  //function to actually parse the info contained in the .SM file
-  function parseSMFile(smData) {  
-    let notesData = {}; //the object to store parsed data
-    let currentSection = ""; //the variable to keep track of only the current section being parsed
-
-    //iterate through each line of the SM file
-    for (let line of smData) {
-      //check to see if the line starts with "#" (denoting sections of information)
-      if (line.startsWith("#")) {
-        //extract the section name minus the # and if it's the BPMS first case, add the text after the ":" to another line 
-        currentSection = line.substring(1).trim().replaceAll(/:.*/g, "");
-        notesData[currentSection] = []; //create an array to store data for the section
-
-        //the adding of the line after the ":"
-        let firstEntry = line.match(/:.*/g)[0].replaceAll(":","");
-        if (currentSection === "BPMS") {
-          notesData[currentSection].push(firstEntry);
-        }
-
-      }
-      else {
-        //if it's NOT a section header (meaning it is data), push the line to the corresponding section array
-        notesData[currentSection].push(line.trim());
-      }
-    }
-
-    return notesData;
-  }
-
-  function extractBPMChanges(notesData) {
-    let bpmSection = notesData["BPMS"];
-    let bpmChanges = {};
-  
-    //split the BPM section into individual BPM entries
-    let bpmEntries = bpmSection.join(",").split(";").filter(entry => entry.trim() !== "");
-    
-    //iterate over each BPM entry
-    for (let bpmEntry of bpmEntries) {
-      //split the entry into beat and BPM pairs using '=' as delimiter
-      let pairs = bpmEntry.split(",");
-      
-      pairs = dePair(pairs);
-
-      //iterate over each pair to extract beat and BPM
-      for (let pair of pairs) {
-        let [beatValue, bpmValue] = pair.split("=");
-        // beatValue.splice(); 
-        let beat = parseFloat(beatValue);
-        let bpm = parseFloat(bpmValue);
-
-        // Check if beat and BPM are valid numbers (not NaN)
-        if (!isNaN(beat) && !isNaN(bpm)) {
-          //store the BPM change in the bpmChanges object
-          bpmChanges[beat] = bpm;
-        } 
-        else {
-          console.error("AHHHHH");
-        }
-      
-      }
-    }
-  
-    return bpmChanges;
-  }
-
-  function calculateBPMToTime(bpmChanges) {
-    let bpmToTime = {};
-    let currentTime = 0;
-
-
-    //iterate over each BPM change using Object.entries()
-    for (let [beat, bpm] of Object.entries(bpmChanges)) {
-      let time = currentTime + (beat - currentTime) * 60 / bpm; //time in seconds
-      bpmToTime[beat] = time;
-      currentTime = time;
-    }
-    return bpmToTime;
-    
-  }
-
-  function extractNotesData(notesData) {
-    //extract the NOTES section from parsed data
-    notesData["NOTES"].splice(0, 5);
-    console.log(notesData["NOTES"]);
-    return notesData["NOTES"];
-
-  }
-
-  function convertNotesToGameNotes(notes, bpmToTime) {
-    let gameNotes = [];
-
-    //iterate through each note in the notes data
-    for (let note = 0; note < notes.length; note++) {
-      if (notes[note].includes("//") || notes[note].includes(",")) { 
-        notes.splice(note, 1);
-      }
-      else {
-        console.log(notes);
-        //parse the note data to extract direction and timing
-        let [direction, timing] = note.split(":");
-        //convert timing to game time based on BPM changes
-        let time = bpmToTime[parseFloat(timing)];
-        //create a game note object with direction and timing information
-        let gameNote = {
-          direction: direction.trim(),
-          timing: time
-        };
-        gameNotes.push(gameNote);
-      }
-      // console.log(gameNotes);
-      return gameNotes;
-    }
-  }
 }
+
+//function to actually parse the info contained in the .SM file
+function parseSMFile(smData) {  
+  let notesData = {}; //the object to store parsed data
+  let currentSection = ""; //the variable to keep track of only the current section being parsed
+  //iterate through each line of the SM file
+  for (let line of smData) {
+    //check to see if the line starts with "#" (denoting sections of information)
+    if (line.startsWith("#")) {
+      //extract the section name minus the # and if it's the BPMS first case, add the text after the ":" to another line 
+      currentSection = line.substring(1).trim().replaceAll(/:.*/g, "");
+      notesData[currentSection] = []; //create an array to store data for the section
+      //the adding of the line after the ":"
+      let firstEntry = line.match(/:.*/g)[0].replaceAll(":","");
+      if (currentSection === "BPMS") {
+        notesData[currentSection].push(firstEntry);
+      }
+    }
+    else {
+      //if it's NOT a section header (meaning it is data), push the line to the corresponding section array
+      notesData[currentSection].push(line.trim());
+    }
+  }
+  return notesData;
+}
+
+function extractBPMChanges(notesData) {
+  let bpmSection = notesData["BPMS"];
+  let bpmChanges = {};
+
+  //split the BPM section into individual BPM entries
+  let bpmEntries = bpmSection.join(",").split(";").filter(entry => entry.trim() !== "");
+  
+  //iterate over each BPM entry
+  for (let bpmEntry of bpmEntries) {
+    //split the entry into beat and BPM pairs using '=' as delimiter
+    let pairs = bpmEntry.split(",");
+    
+    pairs = dePair(pairs);
+    //iterate over each pair to extract beat and BPM
+    for (let pair of pairs) {
+      let [beatValue, bpmValue] = pair.split("=");
+      // beatValue.splice(); 
+      let beat = parseFloat(beatValue);
+      let bpm = parseFloat(bpmValue);
+      // Check if beat and BPM are valid numbers (not NaN)
+      if (!isNaN(beat) && !isNaN(bpm)) {
+        //store the BPM change in the bpmChanges object
+        bpmChanges[beat] = bpm;
+      } 
+      else {
+        console.error("AHHHHH");
+      }
+    
+    }
+  }
+
+  return bpmChanges;
+}
+
+function calculateBPMToTime(bpmChanges) {
+  let bpmToTime = {};
+  let currentTime = 0;
+  //iterate over each BPM change using Object.entries()
+  for (let [beat, bpm] of Object.entries(bpmChanges)) {
+    let time = currentTime + (beat - currentTime) * 60 / bpm; //time in seconds
+    bpmToTime[beat] = time;
+    currentTime = time;
+  }
+  return bpmToTime;
+  
+}
+
+function extractNotesData(notesData) {
+  //extract the NOTES section from parsed data
+  notesData["NOTES"].splice(0, 5);
+  console.log(notesData["NOTES"]);
+  return notesData["NOTES"];
+}
+
+function convertNotesToGameNotes(notes, bpmToTime) {
+  let gameNotes = [];
+  //iterate through each note in the notes data
+  for (let note = 0; note < notes.length; note++) {
+    if (notes[note].includes("//") || notes[note].includes(",")) { 
+      notes.splice(note, 1);
+    }
+    else {
+      console.log(notes);
+      //parse the note data to extract direction and timing
+      let [direction, timing] = note.split(":");
+      //convert timing to game time based on BPM changes
+      let time = bpmToTime[parseFloat(timing)];
+      //create a game note object with direction and timing information
+      let gameNote = {
+        direction: direction.trim(),
+        timing: time
+      };
+      gameNotes.push(gameNote);
+    }
+    // console.log(gameNotes);
+  }
+  return gameNotes;
+}
+
 
 
 function keyReleased() {
