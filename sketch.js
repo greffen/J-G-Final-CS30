@@ -458,7 +458,7 @@ function extractBPMChanges(notesData) {
         bpmChanges[beat] = bpm;
       } 
       else {
-        console.error("AHHHHH");
+        console.error("AHHHHH NOT AGAIN PLEASE (NaN)");
       }
     
     }
@@ -470,45 +470,44 @@ function extractBPMChanges(notesData) {
 function calculateBPMToTime(bpmChanges) {
   let bpmToTime = {};
   let currentTime = 0;
+  console.log(bpmChanges);
   //iterate over each BPM change using Object.entries()
   for (let [beat, bpm] of Object.entries(bpmChanges)) {
     let time = currentTime + (beat - currentTime) * 60 / bpm; //time in seconds
     bpmToTime[beat] = time;
     currentTime = time;
   }
+  console.log(bpmToTime);
   return bpmToTime;
-  
 }
 
 function extractNotesData(notesData) {
   //extract the NOTES section from parsed data
   notesData["NOTES"].splice(0, 5);
-  console.log(notesData["NOTES"]);
   return notesData["NOTES"];
 }
 
 function convertNotesToGameNotes(notes, bpmToTime) {
   let gameNotes = [];
+  // console.log(notes);
+
   //iterate through each note in the notes data
   for (let note = 0; note < notes.length; note++) {
     if (notes[note].includes("//") || notes[note].includes(",")) { 
       notes.splice(note, 1);
     }
     else {
-      console.log(notes);
       //parse the note data to extract direction and timing
-      let [direction, timing] = note.split(":");
+      let [direction] = notes[note].split(":");
       //convert timing to game time based on BPM changes
-      let time = bpmToTime[parseFloat(timing)];
-      //create a game note object with direction and timing information
       let gameNote = {
         direction: direction.trim(),
-        timing: time
       };
       gameNotes.push(gameNote);
     }
-    // console.log(gameNotes);
   }
+  // console.log(gameNotes);
+
   return gameNotes;
 }
 
