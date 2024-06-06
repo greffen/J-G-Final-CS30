@@ -345,11 +345,6 @@ function keyPressed() { //askl
       // song.play();
       gameStartTime = millis();
     } 
-    else if (state === "level1") {
-      //if enter is pressed again on the gameplay screen, it'll go back to the level select screen
-      // song.stop();
-      state = "level select screen";
-    } 
     else if (state === "end") {
       //end the game here
     }
@@ -407,6 +402,7 @@ function generateNotes() {
     }
   });
 }
+
 
 //function to actually parse the info contained in the .SM file
 function parseSMFile(smData) {  
@@ -470,12 +466,12 @@ function extractBPMChanges(notesData) {
 function calculateBPMToTime(bpmChanges) {
   let bpmToTime = {};
   let currentTime = 0;
-  console.log(bpmChanges);
+  // console.log(bpmChanges);
   //iterate over each BPM change using Object.entries()
   for (let [beat, bpm] of Object.entries(bpmChanges)) {
-    let time = currentTime + (beat - currentTime) * 60 / bpm; //time in seconds
+    console.log(bpm);
+    let time = bpm / 60;
     bpmToTime[beat] = time;
-    currentTime = time;
   }
   console.log(bpmToTime);
   return bpmToTime;
@@ -502,6 +498,7 @@ function convertNotesToGameNotes(notes, bpmToTime) {
       //convert timing to game time based on BPM changes
       let gameNote = {
         direction: direction.trim(),
+        time: 
       };
       gameNotes.push(gameNote);
     }
