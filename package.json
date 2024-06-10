@@ -21,6 +21,7 @@
       "no-unused-vars": "off"
     },
     "globals": {
+      "p5": true,
 
       "width": true,
       "height": true,

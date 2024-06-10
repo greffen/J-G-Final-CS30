@@ -1,10 +1,10 @@
-// Intense Walrus Mission (placeholder name)
+// Intense Walrus Mission (final name)
 // Griffin Bartsch && Jackson Peddle
 // 06/15/2024
 //
 // Rhythm based game with piano keys
 //
-// Extras for Experts: swtich, regex - replaceAll, 
+// Extras for Experts: swtich, regex - replaceAll, added p5 to eslint, fft, 
 
 //the menu "things"
 let state = "start screen";
@@ -27,7 +27,10 @@ let lastNoteTime = 0;
 let gameStartTime;
 let activeKeys = [false, false, false, false]; 
 let noteTravelTime;
-
+let fft;
+let song;
+let songDuration;
+let score = 0;
 
 function preload() {
   startButton = loadImage("Assets/Images/unnamed.png");
@@ -36,6 +39,11 @@ function preload() {
   startScreenBackground = loadImage("Assets/Images/intensewalrusmissionfr.png");
   levelSelectBackground = loadImage("Assets/Images/flower_background.jpg");
   creditsButton = loadImage("Assets/Images/credits.png");
+
+  song = loadSound("Assets/Tracks/eineKleineNachtmusik.mp3", () => {
+    songDuration = song.duration(); // get the duration of the song after it has been loaded
+    song.onended(songEnded);
+  });
 }
 
 function setup() {
@@ -59,6 +67,9 @@ function setup() {
 
   //setup for the actual gameplay
   noteTravelTime = (height - 100) / 5; // 5 is the speed of the notes
+
+  fft = new p5.FFT(0.8, 32);
+
 }
 
 
@@ -112,9 +123,25 @@ function draw() {
   //Scene shown while the actual gameplay is going
   else if(state === "level1") {
     background(0);
-    drawGame();
-  }
-}
+    song.play();
+    gameStartTime = millis();
+    const hitNoteIndex = notes.findIndex(note => {
+      return note.keyIndex === keyIndex && note.y >= height - 150 && note.y <= height - 50;
+    });
+
+    if (hitNoteIndex !== -1 && !notes[hitNoteIndex].pressed) {
+      score += 100;
+      notes[hitNoteIndex].pressed = true;
+      notes.splice(hitNoteIndex, 1);
+    } 
+    else if (keyIndex !== undefined && (hitNoteIndex === -1 || (hitNoteIndex !== -1 && notes[hitNoteIndex].pressed))) {
+      //remove points/handle misses as needed
+      score -= 50;
+    }
+  } 
+} 
+
+
 
 function mousePressed() {
   //checks to see if you are clicking a button and performs the action indicated if you are
@@ -377,138 +404,82 @@ function songEnded() {
 function drawGame() {
   background(0);
   drawKeys();
-  // drawScore();
-  // drawPercentage();
+  drawScore();
+  drawPercentage();
+  fft.analyze();
+
   generateNotes();
 
+  for (let i = notes.length - 1; i >= 0; i--) {
+    const note = notes[i];
+    note.update();
+    note.display();
+
+    if (note.missed()) {
+      // Deduct points or handle misses as needed
+      score -= 50;
+      note.pressed = true;
+    }
+
+    if (note.offScreen() || note.pressed) {
+      notes.splice(i, 1);
+    }
+  }
 }
 
 function generateNotes() {
-  //read the .SM file data
-  loadStrings("Assets/Tracks/Syrup.sm", function(smData) {
-    //callback function executed when data is loaded
-    let notesData = parseSMFile(smData);
-    let bpmChanges = extractBPMChanges(notesData);
-    let bpmToTime = calculateBPMToTime(bpmChanges);
-    let notes = extractNotesData(notesData);
-    let gameNotes = convertNotesToGameNotes(notes, bpmToTime);
+  let currentTime = millis() - gameStartTime - noteTravelTime;
 
-    //now process the gameNotes array or do any other necessary operations
-    for (let i = 0; i < gameNotes.length; i++) {
-      let note = gameNotes[i];
-      let bar = new Bars(note.direction);
-      bar.y = note.time * noteTravelTime;
-      notes.push(bar);
-    }
-  });
-}
+  if (currentTime - lastNoteTime >= 200) {
+    let bass = fft.getEnergy("bass");
+    let mid = fft.getEnergy("mid");
+    let treble = fft.getEnergy("treble");
+    let lowMid = fft.getEnergy("lowMid");
+    let highMid = fft.getEnergy("highMid");
 
+    let direction = round(random(0, 3)); //randomly chooses a direction
 
-//function to actually parse the info contained in the .SM file
-function parseSMFile(smData) {  
-  let notesData = {}; //the object to store parsed data
-  let currentSection = ""; //the variable to keep track of only the current section being parsed
-  //iterate through each line of the SM file
-  for (let line of smData) {
-    //check to see if the line starts with "#" (denoting sections of information)
-    if (line.startsWith("#")) {
-      //extract the section name minus the # and if it's the BPMS first case, add the text after the ":" to another line 
-      currentSection = line.substring(1).trim().replaceAll(/:.*/g, "");
-      notesData[currentSection] = []; //create an array to store data for the section
-      //the adding of the line after the ":"
-      let firstEntry = line.match(/:.*/g)[0].replaceAll(":","");
-      if (currentSection === "BPMS") {
-        notesData[currentSection].push(firstEntry);
+    switch (direction) { //creates a new note in ced chosen direction
+    case 0: //a
+      if (bass > 230) { //the threshold for the a key's row
+        notes.push(new Bars("LEFT"));
       }
-    }
-    else {
-      //if it's NOT a section header (meaning it is data), push the line to the corresponding section array
-      notesData[currentSection].push(line.trim());
-    }
-  }
-  return notesData;
-}
-
-function extractBPMChanges(notesData) {
-  let bpmSection = notesData["BPMS"];
-  let bpmChanges = {};
-
-  //split the BPM section into individual BPM entries
-  let bpmEntries = bpmSection.join(",").split(";").filter(entry => entry.trim() !== "");
-  
-  //iterate over each BPM entry
-  for (let bpmEntry of bpmEntries) {
-    //split the entry into beat and BPM pairs using '=' as delimiter
-    let pairs = bpmEntry.split(",");
-    
-    pairs = dePair(pairs);
-    //iterate over each pair to extract beat and BPM
-    for (let pair of pairs) {
-      let [beatValue, bpmValue] = pair.split("=");
-      // beatValue.splice(); 
-      let beat = parseFloat(beatValue);
-      let bpm = parseFloat(bpmValue);
-      // Check if beat and BPM are valid numbers (not NaN)
-      if (!isNaN(beat) && !isNaN(bpm)) {
-        //store the BPM change in the bpmChanges object
-        bpmChanges[beat] = bpm;
-      } 
-      else {
-        console.error("AHHHHH NOT AGAIN PLEASE (NaN)");
+      break;
+    case 1: //s
+      if (mid > 225) { //the threshold for the s key's row
+        notes.push(new Bars("UP"));
       }
-    
+      break;
+    case 2: //k
+      if (lowMid > 100 && treble > 110) { //you get the deal
+        notes.push(new Bars("DOWN"));
+      }
+      break;
+    case 3: //l
+      if (highMid > 120 && bass > 100) { //again
+        notes.push(new Bars("RIGHT"));
+      }
+      break;
     }
+
+    lastNoteTime = currentTime;
   }
-
-  return bpmChanges;
 }
 
-function calculateBPMToTime(bpmChanges) {
-  let bpmToTime = {};
-  let currentTime = 0;
-  // console.log(bpmChanges);
-  //iterate over each BPM change using Object.entries()
-  for (let [beat, bpm] of Object.entries(bpmChanges)) {
-    console.log(bpm);
-    let time = bpm / 60;
-    bpmToTime[beat] = time;
-  }
-  console.log(bpmToTime);
-  return bpmToTime;
+function drawPercentage() { // function to draw the percentage text
+  fill(255);
+  textSize(24);
+  let percentage = map(song.currentTime(), 0, songDuration, 0, 100); // map the current time to a percentage
+  percentage = percentage.toFixed(0); // round the percentage to the nearest integer
+  text(`${percentage}%`, width / 2, height - 25); // display the percentage text centered at the bottom of the canvas
 }
 
-function extractNotesData(notesData) {
-  //extract the NOTES section from parsed data
-  notesData["NOTES"].splice(0, 5);
-  return notesData["NOTES"];
+function drawScore() {
+  fill(255);
+  textSize(32);
+  textAlign(CENTER, CENTER);
+  text(`Score: ${score}`, width / 2, 40);
 }
-
-function convertNotesToGameNotes(notes, bpmToTime) {
-  let gameNotes = [];
-  // console.log(notes);
-
-  //iterate through each note in the notes data
-  for (let note = 0; note < notes.length; note++) {
-    if (notes[note].includes("//") || notes[note].includes(",")) { 
-      notes.splice(note, 1);
-    }
-    else {
-      //parse the note data to extract direction and timing
-      let [direction] = notes[note].split(":");
-      //convert timing to game time based on BPM changes
-      let gameNote = {
-        direction: direction.trim(),
-        time: 
-      };
-      gameNotes.push(gameNote);
-    }
-  }
-  // console.log(gameNotes);
-
-  return gameNotes;
-}
-
-
 
 function keyReleased() {
   let keyIndex;
@@ -553,7 +524,7 @@ function drawKey(x, y, rotation, colorVal) {
     noStroke();
     fill(255);
     rect(x, y, 50, 20);
-    // creates inner black bar that is consistent between bars
+    // creates inner black bar that is consistent between bars (does this for every lane)
     fill(colorVal);
     rect(x, y, 35, 8);
   }
@@ -565,7 +536,6 @@ function drawKey(x, y, rotation, colorVal) {
     noStroke(); 
     fill(255);
     rect(x, y, 50, 20);
-    // creates inner black bar that is consistent between bars
     fill(colorVal);
     rect(x, y, 35, 8);
   }
@@ -577,7 +547,6 @@ function drawKey(x, y, rotation, colorVal) {
     noStroke(); 
     fill(255);
     rect(x, y, 50, 20);
-    // creates inner black bar that is consistent between bars
     fill(colorVal);
     rect(x, y, 35, 8);
   }
@@ -589,19 +558,10 @@ function drawKey(x, y, rotation, colorVal) {
     noStroke();
     fill(255);
     rect(x, y, 50, 20);
-    // creates inner black bar that is consistent between bars
     fill(colorVal);
     rect(x, y, 35, 8);
   }
 }
 
-function dePair(thePair) {
-  let newPair = [];
-   
-  for (let i = 0; i < thePair.length; i++) {
-    if (i % 2 === 0) {
-      newPair.push(thePair[i]);
-    }    
-  }
-  return newPair;
-}
+
+//go to line 129 137
