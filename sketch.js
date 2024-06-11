@@ -31,6 +31,7 @@ let fft;
 let song;
 let songDuration;
 let score = 0;
+let songStarted = false;
 
 function preload() {
   startButton = loadImage("Assets/Images/unnamed.png");
@@ -40,7 +41,7 @@ function preload() {
   levelSelectBackground = loadImage("Assets/Images/flower_background.jpg");
   creditsButton = loadImage("Assets/Images/credits.png");
 
-  song = loadSound("Assets/Tracks/eineKleineNachtmusik.mp3", () => {
+  song = loadSound("Assets/Tracks/riot.mp3", () => {
     songDuration = song.duration(); // get the duration of the song after it has been loaded
     song.onended(songEnded);
   });
@@ -60,11 +61,6 @@ function setup() {
   let goBackButton = new Button(0 + width/12, 0 + height/12, width/8, height/10, state, settingsButton);
   backButton.push(goBackButton);
   
-  //stupid scroll squares
-  for (let i = 0; i < 100; i++) {
-    squares.push(new Square(width/2, i*100));
-  }
-
   //setup for the actual gameplay
   noteTravelTime = (height - 100) / 5; // 5 is the speed of the notes
 
@@ -123,10 +119,14 @@ function draw() {
   //Scene shown while the actual gameplay is going
   else if(state === "level1") {
     background(0);
-    song.play();
+    
+    if (songStarted === false) {
+      song.play();
+      songStarted = true;
+    }
     gameStartTime = millis();
     const hitNoteIndex = notes.findIndex(note => {
-      return note.keyIndex === keyIndex && note.y >= height - 150 && note.y <= height - 50;
+      return note.keyIndex === this.keyIndex && note.y >= height - 150 && note.y <= height - 50;
     });
 
     if (hitNoteIndex !== -1 && !notes[hitNoteIndex].pressed) {
@@ -134,14 +134,13 @@ function draw() {
       notes[hitNoteIndex].pressed = true;
       notes.splice(hitNoteIndex, 1);
     } 
-    else if (keyIndex !== undefined && (hitNoteIndex === -1 || (hitNoteIndex !== -1 && notes[hitNoteIndex].pressed))) {
+    else if (this.keyIndex !== undefined && (hitNoteIndex === -1 || hitNoteIndex !== -1 && notes[hitNoteIndex].pressed)) {
       //remove points/handle misses as needed
       score -= 50;
     }
+    drawGame();
   } 
-} 
-
-
+}
 
 function mousePressed() {
   //checks to see if you are clicking a button and performs the action indicated if you are
@@ -237,25 +236,6 @@ class Button {
   }
 }
 
-//squares in the temp scroll thing
-class Square {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.size = 50;
-    this.color = color(random(255), random(255), random(255));
-  }
-
-  display() {
-    fill(this.color);
-    rectMode(CENTER);
-    let scrolledY = this.y + scrollProperties.y;
-    rect(this.x, scrolledY, this.size, this.size);
-  }
-}
-
-//BARS THAT DROP DOWN CODE
-
 //the class for the notes
 class Bars {
   constructor(direction) {
@@ -268,19 +248,19 @@ class Bars {
     const xOffset = width / 2 - 1.5 * keySize;
 
     switch (this.direction) {
-    case "LEFT":
+    case "A":
       this.x = xOffset;
       this.keyIndex = 0;
       break;
-    case "UP":
+    case "S":
       this.x = xOffset + keySize;
       this.keyIndex = 1;
       break;
-    case "DOWN":
+    case "K":
       this.x = xOffset + 2 * keySize;
       this.keyIndex = 2;
       break;
-    case "RIGHT":
+    case "L":
       this.x = xOffset + 3 * keySize;
       this.keyIndex = 3;
       break;
@@ -299,19 +279,19 @@ class Bars {
 
     //holds the colours as well as the identifier of the notes to be handed out on creation
     switch (this.direction) {
-    case "LEFT":
+    case "A":
       noteId = 0;
       colorVal = color(255, 0, 0);
       break;
-    case "UP":
+    case "S":
       noteId = 1;
       colorVal = color(0, 255, 0);
       break;
-    case "DOWN":
+    case "K":
       noteId = 2;
       colorVal = color(0, 0, 255);
       break;
-    case "RIGHT":
+    case "L":
       noteId = 3;
       colorVal = color(255, 255, 0);
       break;
@@ -364,37 +344,6 @@ function keyPressed() { //askl
     //so long as any of the askl keys are pressed, the active keys will always be true
     activeKeys[keyIndex] = true;
   }
-
-  if (keyCode === 13) { //enter key
-    if (state === "level select screen") {
-      //if enter is pressed on the level selector, it'll go to the gameplay
-      state = "level1";
-      // song.play();
-      gameStartTime = millis();
-    } 
-    else if (state === "end") {
-      //end the game here
-    }
-  } 
-
-  else if (state === "level1") {
-    let score = 0;
-    //checking for the notes distance from perfection
-    const hitNoteIndex = notes.findIndex(note => {
-      return note.keyIndex === keyIndex && note.y >= height - 150 && note.y <= height - 50;
-    });
-
-    //if its a good hit, add points
-    if (hitNoteIndex !== -1 && !notes[hitNoteIndex].pressed) {
-      score += 100;
-      notes[hitNoteIndex].pressed = true;
-      notes.splice(hitNoteIndex, 1);
-    } 
-    //else if it isnt a good hit, deduct points 
-    else if (keyIndex !== undefined && (hitNoteIndex === -1 || hitNoteIndex !== -1 && notes[hitNoteIndex].pressed)) {
-      score -= 50;
-    }
-  }
 }
 
 function songEnded() {
@@ -407,7 +356,7 @@ function drawGame() {
   drawScore();
   drawPercentage();
   fft.analyze();
-
+  
   generateNotes();
 
   for (let i = notes.length - 1; i >= 0; i--) {
@@ -415,8 +364,8 @@ function drawGame() {
     note.update();
     note.display();
 
+    // Deduct points or handle misses as needed
     if (note.missed()) {
-      // Deduct points or handle misses as needed
       score -= 50;
       note.pressed = true;
     }
@@ -442,22 +391,22 @@ function generateNotes() {
     switch (direction) { //creates a new note in ced chosen direction
     case 0: //a
       if (bass > 230) { //the threshold for the a key's row
-        notes.push(new Bars("LEFT"));
+        notes.push(new Bars("A"));
       }
       break;
     case 1: //s
       if (mid > 225) { //the threshold for the s key's row
-        notes.push(new Bars("UP"));
+        notes.push(new Bars("S"));
       }
       break;
     case 2: //k
       if (lowMid > 100 && treble > 110) { //you get the deal
-        notes.push(new Bars("DOWN"));
+        notes.push(new Bars("K"));
       }
       break;
     case 3: //l
       if (highMid > 120 && bass > 100) { //again
-        notes.push(new Bars("RIGHT"));
+        notes.push(new Bars("K"));
       }
       break;
     }
@@ -515,9 +464,9 @@ function drawKeys() {
 }
 
 
-function drawKey(x, y, rotation, colorVal) {
+function drawKey(x, y, noteId, colorVal) {
   // a
-  if (rotation === 0) {
+  if (noteId === 0) {
     fill(colorVal);
     rect(x, y, 55, 25);
     rectMode(CENTER);
@@ -529,7 +478,7 @@ function drawKey(x, y, rotation, colorVal) {
     rect(x, y, 35, 8);
   }
   // s
-  else if (rotation === 1) {
+  else if (noteId === 1) {
     fill(colorVal);
     rect(x, y, 55, 25);
     rectMode(CENTER);
@@ -540,7 +489,7 @@ function drawKey(x, y, rotation, colorVal) {
     rect(x, y, 35, 8);
   }
   // k
-  else if (rotation === 2) {
+  else if (noteId === 2) {
     fill(colorVal);
     rect(x, y, 55, 25);
     rectMode(CENTER);
@@ -551,7 +500,7 @@ function drawKey(x, y, rotation, colorVal) {
     rect(x, y, 35, 8);
   }
   // l
-  else if (rotation === 3) {
+  else if (noteId === 3) {
     fill(colorVal);
     rect(x, y, 55, 25);
     rectMode(CENTER);
