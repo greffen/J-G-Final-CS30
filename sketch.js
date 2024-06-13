@@ -4,7 +4,7 @@
 //
 // Rhythm based game with piano keys
 //
-// Extras for Experts: swtich, regex - replaceAll, added p5 to eslint, fft, 
+// Extras for Experts: swtich, regex - replaceAll, added p5 to eslint, fft, toFixed
 
 const gameState = {
   MENU: 0,
@@ -28,7 +28,7 @@ let buttons = []; //start screen button array
 let backButton = []; //back buttons array
 let songButton = []; //level select buttons array
 let levelSelectBackground, startScreenBackground, gameBackground; //background images
-let startButton, settingsButton, creditsButton, tempDeathButton, goBackButton, theBackButton; //images for buttons
+let startButton, settingsButton, creditsButton, tempDeathButton, goBackButton, theBackButton, songSelectButton; //images for buttons
 let state = gameState.MENU; //starting state
 let notes = [];
 let fft;
@@ -36,7 +36,7 @@ let lastNoteTime = 0;
 let gameStartTime;
 let score = 0;
 let activeKeys = [false, false, false, false]; //the 4 keys used
-let songDuration;
+let song1Duration, song2Duration;
 let selectedSong;
 
 
@@ -48,8 +48,12 @@ function preload() {
   levelSelectBackground = loadImage("Assets/Images/flower_background.jpg");
   gameBackground = loadImage("Assets/Images/gamebackground.png");
   creditsButton = loadImage("Assets/Images/creditsbutton.png");
+  songSelectButton = loadImage("Assets/Images/songbuttontemplate.png");
   songState.SONG1 = loadSound("Assets/Tracks/riot.mp3", () => {
-    songDuration = songState.SONG1.duration(); // get the duration of the song after it has been loaded
+    song1Duration = songState.SONG1.duration(); // get the duration of the song after it has been loaded
+  });
+  songState.SONG2 = loadSound("Assets/Tracks/eineKleineNachtmusik.mp3", () => {
+    song2Duration = songState.SONG2.duration();
   });
 } 
 
@@ -65,12 +69,12 @@ function setup() {
   buttons.push(infoCreditsButton);
   let goBackButton = new Button(0 + width/12, 0 + height/12, width/8, height/10, gameState.MENU, theBackButton);
   backButton.push(goBackButton);
-  let songOneButton = new Button(0 + width/2, 0 + height/12, width/8, height/10, gameState.SONGS1, theBackButton);
+  let songTwoButton = new Button(0 + width/2, 0 + height/2, width/4, height/5, gameState.SONGS2, songSelectButton);
+  songButton.push(songTwoButton);
+  let songOneButton = new Button(0 + width/2, 0 + height/12, width/4, height/5, gameState.SONGS1, songSelectButton);
   songButton.push(songOneButton);
 
   fft = new p5.FFT(0.8, 32);
-
-  selectedSong = songState.SONG1;
 }
 
 function draw() {
@@ -202,30 +206,33 @@ class Button {
     if (mouseX > this.x - this.width / 2 &&
       mouseX < this.x + this.width / 2 &&
       mouseY > this.y - this.length / 2 &&
-      mouseY < this.y + this.length / 2 && state === gameState.LEVELS) {
+      mouseY < this.y + this.length / 2 && state === gameState.LEVELS && state !== gameState.GAME) {
       state = gameState.GAME; // Set state to the button's state if not a back button
-      startThisShit();
-      console.log("the State changed to: ", state);
+      startTheNotes();
     }
     else if (mouseX > this.x - this.width / 2 &&
       mouseX < this.x + this.width / 2 &&
       mouseY > this.y - this.length / 2 &&
-      mouseY < this.y + this.length / 2 && state !== gameState.MENU) {
+      mouseY < this.y + this.length / 2 && state !== gameState.MENU && state !== gameState.GAME) {
       state = gameState.MENU; // Set state to the button's state if not a back button
-      console.log("the State changed to: ", state);
     }
     else if (mouseX > this.x - this.width / 2 &&
       mouseX < this.x + this.width / 2 &&
       mouseY > this.y - this.length / 2 &&
-      mouseY < this.y + this.length / 2 && state === gameState.MENU) {
+      mouseY < this.y + this.length / 2 && state === gameState.MENU && state !== gameState.GAME) {
       state = this.state; // Set state to the button's state if not a back button
-      console.log("State changed to: ", state);
+    }
+    else if (this.state === gameState.SONGS1) {
+      selectedSong = songState.SONG1;
+    }
+    else if (this.state === gameState.SONGS2) {
+      selectedSong = songState.SONG2;
     }
   }
   
 }
 
-function startThisShit() {
+function startTheNotes() {
   state = gameState.GAME;
   selectedSong.play();
   gameStartTime = millis();
@@ -254,7 +261,7 @@ function keyPressed() {
 
   if (keyCode === 100) {
     if (state === gameState.MENU) {
-      startThisShit();
+      startTheNotes();
     } 
     else if (state === gameState.GAME) {
       selectedSong.stop();
@@ -289,9 +296,16 @@ function drawScore() {
 function drawPercentage() { // function to draw the percentage text
   fill(255);
   textSize(24);
-  let percentage = map(selectedSong.currentTime(), 0, songDuration, 0, 100); // map the current time to a percentage
-  percentage = percentage.toFixed(0); // round the percentage to the nearest integer
-  text(`${percentage}%`, width / 2, height - 25); // display the percentage text centered at the bottom of the canvas
+  if (selectedSong === songState.SONG1) {
+    let percentage = map(selectedSong.currentTime(), 0, song1Duration, 0, 100); // map the current time to a percentage
+    percentage = percentage.toFixed(0); // round the percentage to the nearest integer
+    text(`${percentage}%`, width / 2, height - 25); // display the percentage text centered at the bottom of the canvas
+  }
+  else if (selectedSong === songState.SONG2) {
+    let percentage = map(selectedSong.currentTime(), 0, song2Duration, 0, 100); // map the current time to a percentage
+    percentage = percentage.toFixed(0); // round the percentage to the nearest integer
+    text(`${percentage}%`, width / 2, height - 25); // display the percentage text centered at the bottom of the canvas
+  }
 }
 
 
@@ -325,7 +339,7 @@ function drawGame() {
 function generateNotes() {
   let currentTime = millis() - gameStartTime;
 
-  if (currentTime - lastNoteTime >= 200) {
+  if (currentTime - lastNoteTime >= 180) {
     let bass = fft.getEnergy("bass");
     let mid = fft.getEnergy("mid");
     let treble = fft.getEnergy("treble");

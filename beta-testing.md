@@ -17,4 +17,4 @@
 - bug: weapons still gravitating towards you will disappear when you enter a new room
 
 ## My known bugs:
-- 
+- back button doesnt stop the song in gameState.GAME, so we just stopped letting you click it from the playscreen
