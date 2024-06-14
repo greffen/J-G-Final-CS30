@@ -1,20 +1,19 @@
 # Beta-Testing
 
 ## Non-programmer's advice: Jackson's Younger Brother (Grayson)
-- characters look weird
 - very fun
-- add abilities to make each weapon feel more unique
-- the weapon should be displayed in the character's hands
-- make it easier to regain health
-- game is too difficult
-- make weapon drops more common
+- could be more challenging
+- could use more songs (for replay value)
+- make it easier to restart
+- make the song buttons display what each song is on the button 
+- make a guide as to what buttons to use
 
-## Programmer's advice: 
-- add more knockback, player is defenceless when surrounded by enemies in a corner
-- sometimes enemies spawn on doors, so entering rooms can cause immediate damage
-- differences between each level could be more noticeable
-- weapons drop rates should be increased
-- bug: weapons still gravitating towards you will disappear when you enter a new room
+## Programmer's advice: Max
+- add more songs
+- make a guide as to what buttons to use
+- differences between each level could be more noticeable outside of sound
+- could show off the frequencies somehow
 
 ## My known bugs:
 - back button doesnt stop the song in gameState.GAME, so we just stopped letting you click it from the playscreen
+- ending the song does not display the score nor take you anywhere

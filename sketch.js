@@ -27,8 +27,8 @@ const songState = { //all of the states selectable
 let buttons = []; //start screen button array
 let backButton = []; //back buttons array
 let songButton = []; //level select buttons array
-let levelSelectBackground, startScreenBackground, gameBackground; //background images
-let startButton, settingsButton, creditsButton, tempDeathButton, goBackButton, theBackButton, songSelectButton; //images for buttons
+let levelSelectBackground, startScreenBackground, gameBackground, settingsBackground, infoCreditsBackground; //background images
+let startButton, settingsButton, creditsButton, tempDeathButton, goBackButton, theBackButton, songSelectButton1, songSelectButton2; //images for buttons
 let state = gameState.MENU; //starting state
 let notes = [];
 let fft;
@@ -48,7 +48,10 @@ function preload() {
   levelSelectBackground = loadImage("Assets/Images/flower_background.jpg");
   gameBackground = loadImage("Assets/Images/gamebackground.png");
   creditsButton = loadImage("Assets/Images/creditsbutton.png");
-  songSelectButton = loadImage("Assets/Images/songbuttontemplate.png");
+  songSelectButton1 = loadImage("Assets/Images/songbutton1.png");
+  songSelectButton2 = loadImage("Assets/Images/songbutton2.png");
+  settingsBackground = loadImage("Assets/Images/settings.png");
+  infoCreditsBackground = loadImage("Assets/Images/infocredits.png");
   songState.SONG1 = loadSound("Assets/Tracks/riot.mp3", () => {
     song1Duration = songState.SONG1.duration(); // get the duration of the song after it has been loaded
   });
@@ -69,9 +72,9 @@ function setup() {
   buttons.push(infoCreditsButton);
   let goBackButton = new Button(0 + width/12, 0 + height/12, width/8, height/10, gameState.MENU, theBackButton);
   backButton.push(goBackButton);
-  let songTwoButton = new Button(0 + width/2, 0 + height/2, width/4, height/5, gameState.SONGS2, songSelectButton);
+  let songTwoButton = new Button(0 + width/2, 0 + height/2, width/4, height/5, gameState.SONGS2, songSelectButton1);
   songButton.push(songTwoButton);
-  let songOneButton = new Button(0 + width/2, 0 + height/12, width/4, height/5, gameState.SONGS1, songSelectButton);
+  let songOneButton = new Button(0 + width/2, 0 + height/12, width/4, height/5, gameState.SONGS1, songSelectButton2);
   songButton.push(songOneButton);
 
   fft = new p5.FFT(0.8, 32);
@@ -114,13 +117,15 @@ function drawLevels() {
 }
 
 function drawSettings() {
-  background(0);
+  imageMode(CORNER);
+  background(settingsBackground);
   redMouseCircle();
   backButtonFunction();
 }
 
 function drawCredits() {
-  background("red");
+  imageMode(CORNER);
+  background(infoCreditsBackground);
   backButtonFunction();
 }
 
